@@ -1,9 +1,12 @@
 // ignore_for_file: prefer_const_constructors
 import 'dart:convert';
 
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ui/services/authService.dart';
+import 'package:ui/pages/completeChatPage.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -14,11 +17,18 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   List<Widget> chattingHistory = [
-    AiDAResponse("Hey, I am AiDA, your Academic Information and Data Analyst. I am here to answer any questions you have regarding the school hand-book and course book. Please feel free to ask me any questions you want and I will do my best to answer them. If you are not pleased with my services, please reach out to : support@aida.com, and reach out to your counselor regarding your question.")
+    AiDAResponse("Hello! I am AiDA, your Academic Information and Data Analyst. I am here to answer any questions you have regarding the school hand-book and course book. Please feel free to ask me any questions you want and I will do my best to answer them. If you are not pleased with my services, please reach out to : support@aida.com, and reach out to your counselor regarding your question.")
   ];
   TextEditingController prompt = TextEditingController();
   ScrollController _scrollController = ScrollController();
   bool querying = false;
+  bool _isNavigating = false;
+  String _email = "";
+  String _name = "";
+  String _pictureUrl = "";
+  bool signUp = false;
+
+  final AuthService _googleSignIn = AuthService();
 
   void _scrollToBottom() {
     // Ensure the scroll position is set after the frame is built
@@ -27,18 +37,46 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  void initState(){
+    super.initState();
+    _googleSignIn.handleCallback((token) {
+      AuthService.getUserInfoFromAccessToken(token).then((data) async {
+        setState(() {
+          _email = data["email"];
+          _name = data["name"];
+          _pictureUrl = data["photoId"];
+          _isNavigating = true;
+        });
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 
+    if (_isNavigating) {
+      // Navigate when the state is updated
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CompleteChatPageUI(_email, _name, _pictureUrl),
+          ),
+        );
+      });
+      // Reset the flag to prevent multiple navigations
+      _isNavigating = false;
+    }
+
     return Scaffold(
-      backgroundColor: Color(0xffECECEC),
+      backgroundColor:Color.fromARGB(255, 255, 255, 255),
       body: Column(
         children: [
           Container(
             width: width, 
-            height: 70,
+            height: 60,
             color: Color(0xff333333),
             child: Row(
               children: [
@@ -47,30 +85,95 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 const ImageIcon(
                   AssetImage("assets/bsd-logo.png"),
-                  color: Color(0xffECECEC),
-                  size: 28,
+                  color: Color.fromARGB(255, 255, 255, 255),
+                  size: 23,
                 ), 
                 const SizedBox(
-                  width:10,
+                  width: 7.5,
                 ), 
                 Container(
                   margin: EdgeInsets.only(top: 1.5),
                   height: 30, 
                   width: 2, 
-                  color: Color(0xffECECEC),
+                  color: Color.fromARGB(255, 255, 255, 255),
                 ),
                 const SizedBox(
-                  width: 10,
+                  width: 7.5,
                 ), 
                 Text(
                   "AiDA", 
                   style: GoogleFonts.getFont(
                     "Roboto",
-                    fontSize: 30,
+                    fontSize: 25,
+                    letterSpacing: 1.5,
                     height: 1,
-                    color: Color(0xffECECEC),
+                    color: Color.fromARGB(255, 255, 255, 255),
                     fontWeight: FontWeight.w600
                   ),
+                ),
+                Expanded(
+                  child: SizedBox()
+                ),
+                InkWell(
+                  onTap: () async {
+                    try {
+                      signUp = false;
+                      _googleSignIn.signInWithGoogle();
+                    } catch (error) {
+                      print("Sign-in failed: $error");
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10, 
+                      vertical: 10
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5), 
+                      color: Colors.white.withOpacity(0.1)
+                    ),
+                    child: Text(
+                      "Login", 
+                      style: GoogleFonts.getFont("Roboto",
+                        fontSize: 17,
+                        height: 1,
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontWeight: FontWeight.w600
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 10
+                ),
+                InkWell(
+                  onTap: (){
+                    try {
+                      signUp = true;
+                      print("signin in g");
+                      print(signUp);
+                      _googleSignIn.signInWithGoogle();
+                    } catch (error) {
+                      print("Sign-in failed: $error");
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: Colors.white.withOpacity(0.1)),
+                    child: Text(
+                      "Signup",
+                      style: GoogleFonts.getFont("Roboto",
+                          fontSize: 17,
+                          height: 1,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 15,
                 )
               ],
             ),
@@ -98,7 +201,7 @@ class _ChatPageState extends State<ChatPage> {
             width: 670,
             padding: EdgeInsets.all(5),
             decoration: BoxDecoration(
-              color: Color(0xffD4D3D3),
+              color: Color.fromARGB(255, 243, 243, 243),
               borderRadius: BorderRadius.circular(10)
             ),
             child: Row(
@@ -168,7 +271,7 @@ class _ChatPageState extends State<ChatPage> {
                         quarterTurns: 2,
                         child: ImageIcon(
                           AssetImage("assets/send.png"), 
-                          color: Color(0xffD4D3D3),
+                          color: Color.fromARGB(255, 243, 243, 243),
                         ),
                       ),
                     ),
@@ -198,29 +301,22 @@ class AiDAResponse extends StatelessWidget {
         Container(
           width: 50, 
           height: 50,
-          decoration: BoxDecoration(
-            color: Color(0xff333333), 
-            borderRadius: BorderRadius.circular(7.5)
-          ),
           padding: EdgeInsets.all(3),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5),
             child: FittedBox(
               fit: BoxFit.fitHeight, 
-              child: Image.asset("assets/ai-councelor.webp"),
+              child: Image.asset("bsd-logo.webp"),
             ),
           ),
         ), 
-        SizedBox(
-          width: 5,
-        ),
         Container(
           constraints: BoxConstraints(
             maxWidth: 600
           ),
           decoration: BoxDecoration(
-            color: Color(0xffD4D3D3).withOpacity(0.4), 
-            borderRadius: BorderRadius.circular(5)
+            color: Color.fromARGB(169, 243, 243, 243), 
+            borderRadius: BorderRadius.circular(15)
           ),
           padding: EdgeInsets.all(12),
           child: Text(
@@ -244,28 +340,24 @@ class AiDAThinking extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-              color: Color(0xff333333),
-              borderRadius: BorderRadius.circular(7.5)),
-          padding: EdgeInsets.all(3),
+        SizedBox(
+          width: 40,
+          height: 40,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5),
             child: FittedBox(
               fit: BoxFit.fitHeight,
-              child: Image.asset("assets/ai-councelor.webp"),
+              child: Image.asset("bsd-logo.webp"),
             ),
           ),
         ),
         SizedBox(
-          width: 5,
+          width: 10,
         ),
         Container(
           constraints: BoxConstraints(maxWidth: 600),
           decoration: BoxDecoration(
-              color: Color(0xffD4D3D3).withOpacity(0.4),
+              color: Color.fromARGB(169, 243, 243, 243),
               borderRadius: BorderRadius.circular(5)),
           padding: EdgeInsets.all(12),
           child: Text(
@@ -295,7 +387,7 @@ class StudentResponse extends StatelessWidget {
         Container(
           constraints: BoxConstraints(maxWidth: 600),
           decoration: BoxDecoration(
-              color: Color(0xffD4D3D3).withOpacity(0.4),
+              color: Color.fromARGB(169, 243, 243, 243),
               borderRadius: BorderRadius.circular(5)),
           padding: EdgeInsets.all(12),
           child: Text(

@@ -1,21 +1,8 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
@@ -26,13 +13,49 @@
   <meta name="apple-mobile-web-app-title" content="ui">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
+  <meta name="google-signin-client_id" content="YOUR_CLIENT_ID.apps.googleusercontent.com">
+  <link rel="icon" type="image/png" href="favicon.png" />
   <title>ui</title>
   <link rel="manifest" href="manifest.json">
+
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <script>
+    function onSignIn(googleUser) {
+      const profile = googleUser.getBasicProfile();
+      console.log("ID: " + profile.getId()); // Do not send to your backend! Use an ID token instead.
+      console.log("Name: " + profile.getName());
+      console.log("Image URL: " + profile.getImageUrl());
+      console.log("Email: " + profile.getEmail());
+      // Handle successful sign-in, e.g., save user info or redirect
+    }
+
+    function renderButton() {
+      gapi.signin2.render('googleSignInButton', {
+        'scope': 'profile email',
+        'width': 200,
+        'height': 50,
+        'longtitle': true,
+        'theme': 'dark',
+        'onsuccess': onSignIn,
+        'onfailure': function (error) {
+          console.error("Sign-in failed: " + error);
+        }
+      });
+    }
+
+    function init() {
+      gapi.load('auth2', function () {
+        gapi.auth2.init({
+          client_id: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+        }).then(renderButton);
+      });
+    }
+  </script>
 </head>
-<body>
+
+<body onload="init()">
+  <div id="googleSignInButton"></div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
+
 </html>

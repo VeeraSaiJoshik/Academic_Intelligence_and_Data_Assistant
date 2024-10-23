@@ -1,0 +1,1 @@
+This github repository contains the code for the frontend, backend, AI model, and web_scraper are included in this document. For security purposes, the Dockerfile of this project is not included in this github repository, but it can obtained by reaching out to the owner 

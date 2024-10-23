@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:ui/chatPage.dart';
+import 'package:ui/pages/chatPage.dart';
+import 'package:ui/pages/completeChatPage.dart';
+import 'package:ui/services/databaseService.dart';
 
-void main() {
+DatabaseService dbService = DatabaseService();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
